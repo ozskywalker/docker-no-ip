@@ -160,22 +160,31 @@ set_default_values() {
 
 . "$ENV_VARS"
 
-if [ $(all_required_settings_exist) = true ]
+if [ $(all_required_settings_exist) = false ]
 then
-  echo "All required settings passed as environment variables. Skipping config file creation."
-  exit 0
+  if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Required settings are not present (no environ variables, no valid config file)"
+    exit 127
+  fi
+else
+    echo "Required settings are present via environment variables"
 fi
 
 SAFE_CONFIG_FILE=$(create_and_validate_config_file)
 
+echo "Merging config and environment variables together"
 merge_config_vars_and_env_vars $SAFE_CONFIG_FILE
 
+echo "Validating values..."
 validate_values
 
+echo "Setting default values..."
 set_default_values
 
+echo "Printing configuration..."
 print_config
 
+echo "Generating binary configuration..."
 generate_binary_config
 
 # Now dump the envvars, in the style that boot.sh does. exec to avoid SHLVL=2
